@@ -265,6 +265,40 @@ spline-viewer #logo {
     pointer-events: none;
 }
 
+/* [UPDATED] Floating glassmorphic category pill shown above the headline.
+   Uses frosted-glass blur + soft border so it sits nicely on the 3D scene. */
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 20px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+    /* Smooth crossfade + slight rise, driven by the .hero-fade-out toggle class in hero-slider.js */
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* [UPDATED] Small accent dot inside the pill for visual rhythm */
+.hero-tag::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand-cyan);
+    box-shadow: 0 0 8px 1px rgba(0, 168, 204, 0.8);
+}
+
 .hero-headline {
     font-size: 54px;
     font-weight: 800;
@@ -274,6 +308,8 @@ spline-viewer #logo {
     letter-spacing: -0.5px;
     text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     pointer-events: auto;
+    /* [UPDATED] Smooth crossfade transition for auto-rotate / manual-sync text swaps */
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .hero-subtitle {
@@ -285,6 +321,16 @@ spline-viewer #logo {
     max-width: 520px;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
     pointer-events: auto;
+    /* [UPDATED] Smooth crossfade transition for auto-rotate / manual-sync text swaps */
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* [UPDATED] Applied by hero-slider.js right before swapping text content.
+   Fades + lifts the tag/headline/subtitle out, then JS removes this class
+   once the new text is in place so they fade back in. */
+.hero-fade-out {
+    opacity: 0;
+    transform: translateY(10px);
 }
 
 .btn-hero-cta {
@@ -370,6 +416,12 @@ spline-viewer #logo {
 
     .hero-subtitle {
         font-size: 16px;
+    }
+
+    /* [UPDATED] Slightly smaller pill so it doesn't dominate the mobile hero */
+    .hero-tag {
+        font-size: 11px;
+        padding: 7px 16px;
     }
 
     .btn-hero-cta {
