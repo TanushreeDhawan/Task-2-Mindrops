@@ -18,6 +18,9 @@
 
     <!-- Spline Viewer Web Component Script -->
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.98/build/spline-viewer.js"></script>
+
+    <!-- Hybrid Auto-Play & Manual Sync JS Script -->
+    <script src="script.js" defer></script>
 </head>
 <body>
 
@@ -69,7 +72,7 @@
         </div>
     </nav>
 
-    <!-- 3. FULL WIDTH HERO SECTION -->
+    <!-- 3. FULL WIDTH HERO SECTION WITH DYNAMIC TEXT TRANSITION -->
     <section class="hero-section">
         
         <!-- Parent 3D Container (.hero-3d with overflow: hidden) -->
@@ -81,20 +84,25 @@
         <div class="hero-overlay-wrapper">
             <div class="hero-container">
                 <div class="hero-content">
-                    <!-- Glassmorphic floating category pill. Text is swapped by hero-slider.js on each slide change. -->
-                    <span class="hero-tag" id="heroTag">A Mobile &amp; App Development Company</span>
+                    <!-- Glassmorphic Pill Tag Badge (Dynamic) -->
+                    <div class="hero-tag">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>A Mobile & App Development Company</span>
+                    </div>
 
-                    <h1 class="hero-headline" id="heroHeadline">Thinking together,<br>creating together.</h1>
-                    <p class="hero-subtitle" id="heroSubtitle">Joint prototype development.</p>
+                    <!-- Dynamic Headline -->
+                    <h1 class="hero-headline">Thinking together,<br>creating together.</h1>
+
+                    <!-- Dynamic Subtitle -->
+                    <p class="hero-subtitle">Joint prototype development.</p>
+
+                    <!-- Hero CTA Button -->
                     <a href="#contact" class="btn-hero-cta">Get in Touch</a>
                 </div>
             </div>
         </div>
 
     </section>
-
-    <!-- Hero Text Auto-Rotate / Manual-Sync Slider Logic -->
-    <script src="hero-slider.js" defer></script>
 
 </body>
 </html>
