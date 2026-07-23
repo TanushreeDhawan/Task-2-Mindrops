@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroHeadline = document.querySelector('.hero-headline');
     const heroSubtitle = document.querySelector('.hero-subtitle');
     const heroContent = document.querySelector('.hero-content');
-    const splineViewer = document.querySelector('spline-viewer');
+    const inkCanvas = document.getElementById('ink-canvas');
 
     // Function to update content with smooth fade-out and fade-in
     function updateSlide(nextIndex) {
@@ -74,11 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
         startAutoPlay(); // Reset 5-second timer
     }
 
-    // Attach Event Listeners on <spline-viewer>
-    if (splineViewer) {
-        splineViewer.addEventListener('click', handleManualInteraction);
-        splineViewer.addEventListener('mouse-down', handleManualInteraction);
-        splineViewer.addEventListener('spline-event', handleManualInteraction);
+    // Attach Event Listeners on canvas
+    if (inkCanvas) {
+        inkCanvas.addEventListener('click', handleManualInteraction);
     }
 
     // Start Auto-Play System

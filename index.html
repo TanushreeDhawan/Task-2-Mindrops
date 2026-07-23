@@ -15,12 +15,19 @@
     
     <!-- External CSS Stylesheet -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="stats-section.css">
 
-    <!-- Spline Viewer Web Component Script -->
-    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.98/build/spline-viewer.js"></script>
+    <!-- THREE.js Global Library & GLTF Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="droplet_data.js"></script>
+    <script src="three_scene.js" defer></script>
 
     <!-- Hybrid Auto-Play & Manual Sync JS Script -->
     <script src="script.js" defer></script>
+
+    <!-- Stats Section: IntersectionObserver Count-Up Script -->
+    <script src="stats-section.js" defer></script>
 </head>
 <body>
 
@@ -72,37 +79,215 @@
         </div>
     </nav>
 
-    <!-- 3. FULL WIDTH HERO SECTION WITH DYNAMIC TEXT TRANSITION -->
-    <section class="hero-section">
-        
-        <!-- Parent 3D Container (.hero-3d with overflow: hidden) -->
-        <div class="hero-3d">
-            <spline-viewer url="https://prod.spline.design/OW7mUasDYz7kem2f/scene.splinecode"></spline-viewer>
-        </div>
+    <main class="main-wrapper">
 
-        <!-- Text Content Overlay Layer -->
-        <div class="hero-overlay-wrapper">
-            <div class="hero-container">
-                <div class="hero-content">
-                    <!-- Glassmorphic Pill Tag Badge (Dynamic) -->
-                    <div class="hero-tag">
-                        <i class="fa-solid fa-layer-group"></i>
-                        <span>A Mobile & App Development Company</span>
+    <!-- 3. FULL WIDTH HERO TRACK FOR EXTENDED SCROLL -->
+    <div class="hero-track">
+        <section class="hero-section">
+            
+            <!-- Parent 3D Container (.hero-3d with overflow: hidden) -->
+            <div class="hero-3d">
+                <canvas id="ink-canvas" aria-hidden="true"></canvas>
+            </div>
+
+            <!-- Text Content Overlay Layer -->
+            <div class="hero-overlay-wrapper">
+                <div class="hero-container">
+                    <div class="hero-content">
+                        <!-- Glassmorphic Pill Tag Badge (Dynamic) -->
+                        <div class="hero-tag">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span>A Mobile & App Development Company</span>
+                        </div>
+
+                        <!-- Dynamic Headline -->
+                        <h1 class="hero-headline">Thinking together,<br>creating together.</h1>
+
+                        <!-- Dynamic Subtitle -->
+                        <p class="hero-subtitle">Joint prototype development.</p>
+
+                        <!-- Hero CTA Button -->
+                        <a href="#contact" class="btn-hero-cta">Get in Touch</a>
                     </div>
-
-                    <!-- Dynamic Headline -->
-                    <h1 class="hero-headline">Thinking together,<br>creating together.</h1>
-
-                    <!-- Dynamic Subtitle -->
-                    <p class="hero-subtitle">Joint prototype development.</p>
-
-                    <!-- Hero CTA Button -->
-                    <a href="#contact" class="btn-hero-cta">Get in Touch</a>
                 </div>
             </div>
-        </div>
 
-    </section>
+        </section>
+    </div>
+
+        <!-- 4. STATS & NARRATIVE SECTION ("Fluid by Nature") -->
+        <section class="stats-section" id="philosophy">
+
+            <!-- Hidden defs: teardrop clip-path shared by every icon badge (echoes the hero droplet) -->
+            <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+                <defs>
+                    <clipPath id="teardrop-clip">
+                        <path d="M24 3C24 3 9 24 9 33C9 41.28 15.9 46 24 46C32.1 46 39 41.28 39 33C39 24 24 3 24 3Z"/>
+                    </clipPath>
+                </defs>
+            </svg>
+
+            <!-- Static "Mind Mesh" network background (pure SVG, zero JS/canvas loop) -->
+            <div class="mesh-overlay">
+                <svg class="mesh-svg" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <g class="mesh-lines" fill="none" stroke="#00d4ff" stroke-width="1">
+                    <line x1="1051.1" y1="534.3" x2="927.2" y2="482.9"/>
+                    <line x1="910.0" y1="297.3" x2="927.2" y2="482.9"/>
+                    <line x1="1360.1" y1="275.8" x2="1226.4" y2="458.8"/>
+                    <line x1="131.7" y1="196.9" x2="161.4" y2="231.3"/>
+                    <line x1="1206.5" y1="478.8" x2="1226.4" y2="458.8"/>
+                    <line x1="326.1" y1="404.1" x2="259.6" y2="574.1"/>
+                    <line x1="1148.1" y1="550.6" x2="1181.2" y2="490.1"/>
+                    <line x1="1153.2" y1="24.9" x2="1006.4" y2="54.8"/>
+                    <line x1="1148.1" y1="550.6" x2="1150.0" y2="574.6"/>
+                    <line x1="1226.4" y1="458.8" x2="1405.3" y2="506.4"/>
+                    <line x1="927.2" y1="482.9" x2="799.7" y2="540.3"/>
+                    <line x1="915.2" y1="39.0" x2="1006.4" y2="54.8"/>
+                    <line x1="405.0" y1="189.6" x2="339.1" y2="239.9"/>
+                    <line x1="1181.2" y1="490.1" x2="1226.4" y2="458.8"/>
+                    <line x1="405.0" y1="189.6" x2="340.7" y2="44.4"/>
+                    <line x1="57.2" y1="171.1" x2="161.4" y2="231.3"/>
+                    <line x1="1150.0" y1="574.6" x2="1200.0" y2="609.8"/>
+                    <line x1="770.7" y1="759.6" x2="799.7" y2="540.3"/>
+                    <line x1="1269.1" y1="86.1" x2="1153.2" y2="24.9"/>
+                    <line x1="929.8" y1="434.2" x2="799.7" y2="540.3"/>
+                    <line x1="1269.1" y1="86.1" x2="1360.1" y2="275.8"/>
+                    <line x1="1206.5" y1="478.8" x2="1181.2" y2="490.1"/>
+                    <line x1="610.7" y1="42.6" x2="496.4" y2="138.2"/>
+                    <line x1="1206.5" y1="478.8" x2="1405.3" y2="506.4"/>
+                    <line x1="328.6" y1="467.8" x2="549.9" y2="439.6"/>
+                    <line x1="405.0" y1="189.6" x2="496.4" y2="138.2"/>
+                    <line x1="1051.1" y1="534.3" x2="1148.1" y2="550.6"/>
+                    <line x1="328.6" y1="467.8" x2="393.8" y2="731.9"/>
+                    <line x1="1148.1" y1="550.6" x2="1200.0" y2="609.8"/>
+                    <line x1="496.4" y1="138.2" x2="538.3" y2="179.2"/>
+                    <line x1="57.2" y1="171.1" x2="149.8" y2="93.5"/>
+                    <line x1="149.8" y1="93.5" x2="131.7" y2="196.9"/>
+                    <line x1="393.8" y1="731.9" x2="259.6" y2="574.1"/>
+                    <line x1="770.7" y1="759.6" x2="927.2" y2="482.9"/>
+                    <line x1="929.8" y1="434.2" x2="910.0" y2="297.3"/>
+                    <line x1="57.2" y1="171.1" x2="131.7" y2="196.9"/>
+                    <line x1="929.8" y1="434.2" x2="927.2" y2="482.9"/>
+                    <line x1="339.1" y1="239.9" x2="248.8" y2="308.4"/>
+                    <line x1="326.1" y1="404.1" x2="328.6" y2="467.8"/>
+                    <line x1="161.4" y1="231.3" x2="248.8" y2="308.4"/>
+                    <line x1="915.2" y1="39.0" x2="1153.2" y2="24.9"/>
+                    <line x1="326.1" y1="404.1" x2="549.9" y2="439.6"/>
+                    <line x1="610.7" y1="42.6" x2="538.3" y2="179.2"/>
+                    <line x1="326.1" y1="404.1" x2="248.8" y2="308.4"/>
+                    <line x1="328.6" y1="467.8" x2="259.6" y2="574.1"/>
+                    <line x1="1051.1" y1="534.3" x2="1150.0" y2="574.6"/>
+                    <line x1="405.0" y1="189.6" x2="538.3" y2="179.2"/>
+                    <line x1="496.4" y1="138.2" x2="340.7" y2="44.4"/>
+                    </g>
+                    <g class="mesh-nodes" fill="#8ff2ff">
+                    <circle cx="915.2" cy="39.0" r="2.1"/>
+                    <circle cx="405.0" cy="189.6" r="2.0"/>
+                    <circle cx="1051.1" cy="534.3" r="1.9"/>
+                    <circle cx="1269.1" cy="86.1" r="3.1"/>
+                    <circle cx="610.7" cy="42.6" r="3.0"/>
+                    <circle cx="326.1" cy="404.1" r="2.1"/>
+                    <circle cx="57.2" cy="171.1" r="2.6"/>
+                    <circle cx="929.8" cy="434.2" r="2.2"/>
+                    <circle cx="328.6" cy="467.8" r="3.1"/>
+                    <circle cx="1153.2" cy="24.9" r="2.3"/>
+                    <circle cx="1148.1" cy="550.6" r="2.0"/>
+                    <circle cx="496.4" cy="138.2" r="2.0"/>
+                    <circle cx="1360.1" cy="275.8" r="2.5"/>
+                    <circle cx="149.8" cy="93.5" r="2.0"/>
+                    <circle cx="1206.5" cy="478.8" r="2.5"/>
+                    <circle cx="1150.0" cy="574.6" r="3.0"/>
+                    <circle cx="770.7" cy="759.6" r="2.2"/>
+                    <circle cx="549.9" cy="439.6" r="2.0"/>
+                    <circle cx="1181.2" cy="490.1" r="3.2"/>
+                    <circle cx="1226.4" cy="458.8" r="2.4"/>
+                    <circle cx="1006.4" cy="54.8" r="1.7"/>
+                    <circle cx="339.1" cy="239.9" r="1.7"/>
+                    <circle cx="131.7" cy="196.9" r="1.8"/>
+                    <circle cx="161.4" cy="231.3" r="2.6"/>
+                    <circle cx="910.0" cy="297.3" r="2.9"/>
+                    <circle cx="538.3" cy="179.2" r="2.3"/>
+                    <circle cx="393.8" cy="731.9" r="1.7"/>
+                    <circle cx="927.2" cy="482.9" r="2.2"/>
+                    <circle cx="259.6" cy="574.1" r="3.2"/>
+                    <circle cx="248.8" cy="308.4" r="2.4"/>
+                    <circle cx="1405.3" cy="506.4" r="3.2"/>
+                    <circle cx="799.7" cy="540.3" r="3.0"/>
+                    <circle cx="1200.0" cy="609.8" r="1.6"/>
+                    <circle cx="340.7" cy="44.4" r="2.8"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Header block -->
+            <div class="stats-header">
+                <span class="stats-kicker">THE MINDROPS PHILOSOPHY</span>
+                <h2 class="stats-heading">Fluid by Nature.</h2>
+                <p class="stats-subheading">One drop. Ripples that reach everywhere.</p>
+                <p class="stats-body">Every product we build starts as a single idea dropped into motion — engineered until it ripples through everything it touches.</p>
+            </div>
+
+            <!-- Stats grid (3x2 desktop / 2 tablet / 1 mobile) -->
+            <div class="stats-grid">
+
+                <!-- 1. Projects Done -->
+                <div class="stat-card" data-count="500">
+                    <div class="stat-icon-badge">
+                        <svg viewBox="0 0 24 24"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/></svg>
+                    </div>
+                    <div class="stat-number"><span class="count-value">0</span><span class="count-suffix">+</span></div>
+                    <div class="stat-label">Projects Done</div>
+                </div>
+
+                <!-- 2. Global Clientele -->
+                <div class="stat-card" data-count="30">
+                    <div class="stat-icon-badge">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M5 7.5h14M5 16.5h14"/></svg>
+                    </div>
+                    <div class="stat-number"><span class="count-value">0</span><span class="count-suffix">+</span></div>
+                    <div class="stat-label">Global Clientele</div>
+                </div>
+
+                <!-- 3. Team Members -->
+                <div class="stat-card" data-count="100">
+                    <div class="stat-icon-badge">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="18" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="18" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><line x1="12" y1="6.6" x2="12" y2="10.4"/><line x1="6.2" y1="16.8" x2="10.6" y2="13.1"/><line x1="17.8" y1="16.8" x2="13.4" y2="13.1"/></svg>
+                    </div>
+                    <div class="stat-number"><span class="count-value">0</span><span class="count-suffix">+</span></div>
+                    <div class="stat-label">Team Members</div>
+                </div>
+
+                <!-- 4. Happy Customers -->
+                <div class="stat-card" data-count="2000">
+                    <div class="stat-icon-badge">
+                        <svg viewBox="0 0 24 24"><circle cx="7" cy="6" r="2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="12" r="2"/><path d="M7 8v8"/><path d="M7 12h6a4 4 0 0 0 4-4"/></svg>
+                    </div>
+                    <div class="stat-number"><span class="count-value">0</span><span class="count-suffix">+</span></div>
+                    <div class="stat-label">Happy Customers</div>
+                </div>
+
+                <!-- 5. Partner Brands -->
+                <div class="stat-card" data-count="100">
+                    <div class="stat-icon-badge">
+                        <svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><polyline points="9 12 11 14 15 9"/></svg>
+                    </div>
+                    <div class="stat-number"><span class="count-value">0</span><span class="count-suffix">+</span></div>
+                    <div class="stat-label">Partner Brands</div>
+                </div>
+
+                <!-- 6. Established -->
+                <div class="stat-card" data-count="2014">
+                    <div class="stat-icon-badge">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="6" opacity="0.65"/><circle cx="12" cy="12" r="10" opacity="0.35"/></svg>
+                    </div>
+                    <div class="stat-number"><span class="count-value">0</span><span class="count-suffix"></span></div>
+                    <div class="stat-label">Established</div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
 
 </body>
 </html>
