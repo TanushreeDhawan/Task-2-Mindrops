@@ -45,7 +45,7 @@ const SEGMENTS = 200;
 const planeGeo = new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE, SEGMENTS, SEGMENTS);
 planeGeo.rotateX(-Math.PI / 2);
 
-const MAX_DROPS = 12;
+const MAX_DROPS = 24; // bumped from 12 — ambient rain now also spawns impact ripples
 const uniforms = {
   uTime:       { value: 0 },
   uDropTime:   { value: new Array(MAX_DROPS).fill(-1) },
@@ -346,6 +346,154 @@ initGLBDrop();
 splashParticles.visible = false;
 rig.add(splashParticles);
 
+// ==============================================================================
+// AMBIENT BACKGROUND WATER DROPS
+// Clones the EXACT same LatheGeometry teardrop mesh + MeshPhysicalMaterial
+// recipe as the central drop (dropletGeo / dropletMaterial) — just re-tinted
+// per layer and dialed down in opacity/emissive so the central drop still
+// reads as the hero focal point. This is what actually renders as solid
+// glass instead of a hollow/ghost bubble: high `transmission` combined with
+// very low `opacity` is what caused the bubble look before, so here we keep
+// transmission/roughness/ior/clearcoat identical to the working central
+// drop and only move opacity + emissiveIntensity.
+// Two layers: A = foreground (bigger, heavier/faster), B = background
+// (smaller, slower, more distant-looking).
+// ==============================================================================
+function makeAmbientDropletMaterial(opacity, emissiveIntensity) {
+  const mat = dropletMaterial.clone();
+  mat.opacity = opacity;
+  mat.transparent = true;
+  mat.emissiveIntensity = emissiveIntensity;
+  mat.depthWrite = false; // avoids overlapping drops occluding each other harshly
+  return mat;
+}
+
+const ambientMatFore = makeAmbientDropletMaterial(0.82, 0.35); // Layer A — clearly visible glass
+const ambientMatBack = makeAmbientDropletMaterial(0.55, 0.22); // Layer B — a touch softer/further back
+
+const ambientGroup = new THREE.Group();
+rig.add(ambientGroup);
+
+const AMBIENT_X_RANGE = [-6.5, 6.5];
+const AMBIENT_Z_RANGE = [-3, 3.5];
+const AMBIENT_TOP_Y = 9;
+const AMBIENT_IMPACT_Y = 0.05; // matches the central droplet's own impact height
+
+const GRAVITY_FORE = 3.4; // units/s^2 — heavier, faster-accelerating foreground rain
+const GRAVITY_BACK = 1.8; // units/s^2 — softer background layer
+
+function randRange([min, max]) { return min + Math.random() * (max - min); }
+
+const ambientDrops = [];
+
+function resetAmbientDrop(d) {
+  d.mesh.position.y = AMBIENT_TOP_Y + Math.random() * 3;
+  d.baseX = randRange(AMBIENT_X_RANGE);
+  d.mesh.position.x = d.baseX;
+  d.mesh.position.z = randRange(AMBIENT_Z_RANGE);
+
+  //d.vy = d.isForeground ? randRange([2.2, 3.2]) : randRange([1.0, 1.7]);
+  d.vy = d.isForeground ? randRange([2.2, 3.2]) : randRange([1.0, 1.7]);
+
+  d.spawnDelay = 0.4 + Math.random() * 2.8;
+  d.active = false;
+}
+
+function spawnAmbientDrop(isForeground) {
+  const mesh = new THREE.Mesh(dropletGeo, isForeground ? ambientMatFore : ambientMatBack);
+  const scale = isForeground ? randRange([0.34, 0.52]) : randRange([0.14, 0.26]);
+  mesh.scale.setScalar(scale);
+
+  mesh.rotation.y = Math.random() * Math.PI * 2;
+
+  ambientGroup.add(mesh);
+
+  /* const d = {
+    mesh,
+    isForeground,
+    gravity: isForeground ? GRAVITY_FORE : GRAVITY_BACK,
+    rippleAmp: isForeground ? randRange([0.10, 0.16]) : randRange([0.04, 0.07]),
+    sway: randRange([0.08, 0.2]),
+    swaySpeed: randRange([0.3, 0.7]),
+    phase: Math.random() * Math.PI * 2,
+    baseX: 0,
+    vy: 0
+  }; */
+
+  const d = {
+    mesh,
+    isForeground,
+    gravity: isForeground ? GRAVITY_FORE : GRAVITY_BACK,
+    rippleAmp: isForeground ? randRange([0.10, 0.16]) : randRange([0.04, 0.07]),
+    sway: randRange([0.08, 0.2]),
+    swaySpeed: randRange([0.3, 0.7]),
+    phase: Math.random() * Math.PI * 2,
+    baseX: 0,
+    vy: 0,
+
+    // NEW
+    spawnDelay: Math.random() * 4.5,
+    active: false
+};
+
+  resetAmbientDrop(d);
+  // Stagger initial heights so they don't all fall/impact in lockstep
+  d.mesh.position.y = randRange([AMBIENT_TOP_Y * 0.15, AMBIENT_TOP_Y]);
+  ambientDrops.push(d);
+}
+
+/*for (let i = 0; i < 6; i++) spawnAmbientDrop(true);   // Layer A — foreground
+for (let i = 0; i < 9; i++) spawnAmbientDrop(false);  // Layer B — background */
+// Keep only 5–8 active drops total.
+for (let i = 0; i < 3; i++) spawnAmbientDrop(true);   // Layer A — foreground
+for (let i = 0; i < 3; i++) spawnAmbientDrop(false);  // Layer B — background
+
+function updateAmbientDrops(t, dt) {
+  for (let i = 0; i < ambientDrops.length; i++) {
+
+    const d = ambientDrops[i];
+
+    // Real gravity: velocity accelerates downward each frame, so falls feel
+    // heavy rather than drifting at a constant "soap bubble" speed.
+    d.vy += d.gravity * dt;
+    d.mesh.position.y -= d.vy * dt;
+    d.mesh.position.x = d.baseX + Math.sin(t * d.swaySpeed + d.phase) * d.sway;
+
+    /*
+    d.mesh.rotation.y += dt * 0.4;
+    d.mesh.rotation.x += dt * 0.1; */
+
+    //NEW:
+    // Keep the pointed tip facing +Y at all times.
+    d.mesh.rotation.set(0, 0, 0);
+
+    if (d.mesh.position.y <= AMBIENT_IMPACT_Y) {
+
+
+      // Trigger a real expanding ripple on the water plane at the impact point
+      //spawnDrop(d.mesh.position.x, d.mesh.position.z, d.rippleAmp);
+
+      //NEW:
+      const ripple =
+        THREE.MathUtils.mapLinear(
+        d.mesh.scale.x,
+        0.14,
+        0.52,
+        0.05,
+        0.18
+        );
+      spawnDrop(
+          d.mesh.position.x,
+          d.mesh.position.z,
+          ripple
+      );
+
+
+      resetAmbientDrop(d);
+    }
+  }
+}
+
 // DROPLET POSITION & STATE
 const DROP_START_Y = 4.5;
 const DROP_X = 2; // Right-mid space
@@ -384,8 +532,14 @@ layout();
 window.addEventListener('resize', layout);
 
 function animate() {
-  const t = clock.getElapsedTime();
+  // getDelta() already advances/accumulates clock.elapsedTime internally,
+  // so reading .elapsedTime here (instead of calling getElapsedTime(), which
+  // would call getDelta() a second time) keeps timing identical to before.
+  const dt = Math.min(clock.getDelta(), 0.1);
+  const t = clock.elapsedTime;
   uniforms.uTime.value = t;
+
+  updateAmbientDrops(t, dt);
 
   const scrollProgress = getScrollProgress();
 
@@ -412,7 +566,13 @@ function animate() {
     
     // Trigger Ripple Impact
     if (!splashTriggered) {
-      spawnDrop(DROP_X, DROP_Z, 0.40);
+      //spawnDrop(DROP_X, DROP_Z, 0.40);
+
+      spawnDrop(
+        DROP_X,
+        DROP_Z,
+        droplet.scale.x * 0.28
+      );
       splashTriggered = true;
     }
 
