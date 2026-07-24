@@ -16,6 +16,7 @@
     <!-- External CSS Stylesheet -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="stats-section.css">
+    <link rel="stylesheet" href="hero-effects.css">
 
     <!-- THREE.js Global Library & GLTF Loader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -28,6 +29,12 @@
 
     <!-- Stats Section: IntersectionObserver Count-Up Script -->
     <script src="stats-section.js" defer></script>
+
+    <!-- Navbar Light/Dark Theme Transition Script -->
+    <script src="nav-theme.js" defer></script>
+
+    <!-- Hero Enhancement: Ambient Water Drops + Floating Tech Badges (magnetic hover) -->
+    <script src="hero-effects.js" defer></script>
 </head>
 <body>
 
@@ -88,6 +95,49 @@
             <!-- Parent 3D Container (.hero-3d with overflow: hidden) -->
             <div class="hero-3d">
                 <canvas id="ink-canvas" aria-hidden="true"></canvas>
+
+                <!-- Secondary Ambient Water Drops: small background droplets, parallax depth -->
+                <div class="ambient-drops" aria-hidden="true">
+                    <div class="ambient-drop-wrap ad-1"><span class="ambient-drop" data-depth="0.6"></span></div>
+                    <div class="ambient-drop-wrap ad-2"><span class="ambient-drop" data-depth="1.2"></span></div>
+                    <div class="ambient-drop-wrap ad-3"><span class="ambient-drop" data-depth="0.4"></span></div>
+                    <div class="ambient-drop-wrap ad-4"><span class="ambient-drop" data-depth="1.6"></span></div>
+                    <div class="ambient-drop-wrap ad-5"><span class="ambient-drop" data-depth="0.8"></span></div>
+                    <div class="ambient-drop-wrap ad-6"><span class="ambient-drop" data-depth="0.5"></span></div>
+                    <div class="ambient-drop-wrap ad-7"><span class="ambient-drop" data-depth="1.1"></span></div>
+                    <div class="ambient-drop-wrap ad-8"><span class="ambient-drop" data-depth="1.8"></span></div>
+                </div>
+            </div>
+
+            <!-- Floating Tech Stack Badges: glassmorphism pills, float + magnetic hover (see hero-effects.js/css) -->
+            <div class="hero-tech-badges" aria-hidden="true">
+                <div class="tech-badge tb-html float-slow">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-html5"></i><span>HTML</span></div>
+                </div>
+                <div class="tech-badge tb-css float-fast">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-css3-alt"></i><span>CSS</span></div>
+                </div>
+                <div class="tech-badge tb-dotnet float-medium">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-microsoft"></i><span>.NET</span></div>
+                </div>
+                <div class="tech-badge tb-js float-fast">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-square-js"></i><span>JavaScript</span></div>
+                </div>
+                <div class="tech-badge tb-react float-slow">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-react"></i><span>React</span></div>
+                </div>
+                <div class="tech-badge tb-node float-medium">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-node-js"></i><span>Node.js</span></div>
+                </div>
+                <div class="tech-badge tb-php float-fast">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-php"></i><span>PHP</span></div>
+                </div>
+                <div class="tech-badge tb-shopify float-slow">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-shopify"></i><span>Shopify</span></div>
+                </div>
+                <div class="tech-badge tb-wp float-medium">
+                    <div class="tech-badge-inner"><i class="fa-brands fa-wordpress"></i><span>WordPress</span></div>
+                </div>
             </div>
 
             <!-- Text Content Overlay Layer -->
@@ -121,8 +171,8 @@
             <!-- Hidden defs: teardrop clip-path shared by every icon badge (echoes the hero droplet) -->
             <svg width="0" height="0" style="position:absolute" aria-hidden="true">
                 <defs>
-                    <clipPath id="teardrop-clip">
-                        <path d="M24 3C24 3 9 24 9 33C9 41.28 15.9 46 24 46C32.1 46 39 41.28 39 33C39 24 24 3 24 3Z"/>
+                    <clipPath id="teardrop-clip" clipPathUnits="objectBoundingBox">
+                        <path d="M0.5 0.0625C0.5 0.0625 0.1875 0.5 0.1875 0.6875C0.1875 0.86 0.33125 0.9583 0.5 0.9583C0.66875 0.9583 0.8125 0.86 0.8125 0.6875C0.8125 0.5 0.5 0.0625 0.5 0.0625Z"/>
                     </clipPath>
                 </defs>
             </svg>

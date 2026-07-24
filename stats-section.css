@@ -123,44 +123,44 @@
     position: relative;
     padding: 32px 26px 30px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 212, 204, 0.15);
-    border-color: rgba(0, 212, 255, 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 212, 255, 0.2);
     transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
     will-change: transform;
 }
 
 .stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 212, 255, 0.2);
-    border-color: rgba(0, 212, 255, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
 }
 
-/* Teardrop icon badge — same silhouette as the hero droplet */
+/* Teardrop icon badge — same silhouette as the hero droplet, enlarged for legibility */
 .stat-icon-badge {
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 22px;
-    background: linear-gradient(160deg, rgba(0, 212, 255, 0.28) 0%, rgba(0, 91, 138, 0.16) 100%);
-    border: 1px solid rgba(143, 242, 255, 0.35);
+    background: linear-gradient(160deg, rgba(0, 212, 255, 0.32) 0%, rgba(0, 91, 138, 0.18) 100%);
+    border: 1px solid rgba(143, 242, 255, 0.4);
     clip-path: url(#teardrop-clip);
-    color: #8ff2ff;
+    color: #ffffff;
 }
 
 .stat-icon-badge svg {
-    width: 21px;
-    height: 21px;
-    stroke: currentColor;
+    width: 28px;
+    height: 28px;
+    stroke: #ffffff;
     fill: none;
-    stroke-width: 1.6;
+    stroke-width: 1.7;
     stroke-linecap: round;
     stroke-linejoin: round;
-    margin-top: 4px; /* optically re-center inside the teardrop point */
+    margin-top: 5px; /* optically re-center inside the teardrop point */
+    filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.5));
 }
 
 .stat-number {
