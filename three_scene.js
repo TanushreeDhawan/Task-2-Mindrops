@@ -47,13 +47,14 @@ planeGeo.rotateX(-Math.PI / 2);
 
 const MAX_DROPS = 24; // bumped from 12 — ambient rain now also spawns impact ripples
 const uniforms = {
-  uTime:       { value: 0 },
-  uDropTime:   { value: new Array(MAX_DROPS).fill(-1) },
-  uDropOrigin: { value: new Array(MAX_DROPS).fill(0).map(() => new THREE.Vector2()) },
-  uDropAmp:    { value: new Array(MAX_DROPS).fill(0.1) },
-  uColorDeep:  { value: new THREE.Color(0x030d1c) },
-  uColorMid:   { value: new THREE.Color(0x006ba6) },
-  uColorRim:   { value: new THREE.Color(0x8ff2ff) },
+  uTime:        { value: 0 },
+  uDropTime:    { value: new Array(MAX_DROPS).fill(-1) },
+  uDropOrigin:  { value: new Array(MAX_DROPS).fill(0).map(() => new THREE.Vector2()) },
+  uDropAmp:     { value: new Array(MAX_DROPS).fill(0.1) },
+  uDropFalloff: { value: new Array(MAX_DROPS).fill(1.0) }, // 1.0 = hero-scale radius/decay
+  uColorDeep:   { value: new THREE.Color(0x030d1c) },
+  uColorMid:    { value: new THREE.Color(0x006ba6) },
+  uColorRim:    { value: new THREE.Color(0x8ff2ff) },
 };
 
 const HEIGHT_GLSL = `
@@ -61,6 +62,7 @@ const HEIGHT_GLSL = `
   uniform float uDropTime[${MAX_DROPS}];
   uniform vec2  uDropOrigin[${MAX_DROPS}];
   uniform float uDropAmp[${MAX_DROPS}];
+  uniform float uDropFalloff[${MAX_DROPS}];
 
   float heightAt(vec2 p){
     float h = 0.0;
@@ -69,11 +71,12 @@ const HEIGHT_GLSL = `
       float age = uTime - startT;
       if(startT > 0.0 && age >= 0.0 && age < 7.0){
         float d = distance(p, uDropOrigin[i]);
+        float df = uDropFalloff[i]; // 1.0 = hero scale, >1.0 = tighter/smaller ripple
         float speed = 2.4;
         float wavefront = age * speed;
         float ring = sin(d * 5.0 - age * 5.5) * exp(-pow(d - wavefront, 2.0) * 1.2);
-        float distanceFalloff = 1.0 / (1.0 + d * 0.8);
-        float ageFalloff = exp(-age * 0.5);
+        float distanceFalloff = 1.0 / (1.0 + d * 0.8 * df);
+        float ageFalloff = exp(-age * 0.5 * df);
         h += ring * distanceFalloff * ageFalloff * uDropAmp[i];
       }
     }
@@ -173,6 +176,30 @@ const dropletMaterial = new THREE.MeshPhysicalMaterial({
   reflectivity: 1.0
 });
 
+// ==============================================================================
+// HERO DROP BRAND PATTERN
+// Maps the Mindrops veined-drop artwork onto the hero droplet only (the
+// ambient background drops below clone `dropletMaterial` BEFORE this texture
+// is attached, so they stay plain and the hero drop remains the one branded
+// focal point).
+//
+// IMPORTANT: applied as `emissiveMap`, NOT `map`. The droplet's revolve UV
+// wraps this whole square image around the full 360°, so most sampled points
+// land on the transparent margin around the icon rather than the icon itself.
+// Using it as the base `map` on a `transparent: true` material meant almost
+// the entire surface read as near-zero alpha — which is why the drop vanished
+// entirely. emissiveMap only adds glow on top of the existing glass — it
+// never affects opacity, so the drop can't disappear again, and the veined
+// pattern still reads clearly as a glowing brand mark inside the glass.
+// ==============================================================================
+const dropPatternTexture = new THREE.TextureLoader().load('mindrops-drop-pattern.png');
+if (THREE.SRGBColorSpace) dropPatternTexture.colorSpace = THREE.SRGBColorSpace;
+
+const heroDropletMaterial = dropletMaterial.clone();
+heroDropletMaterial.emissiveMap = dropPatternTexture;
+heroDropletMaterial.emissive = new THREE.Color(0x49d9ff); // brighter cyan so the veins actually pop against the glass
+heroDropletMaterial.emissiveIntensity = 0.65;
+
 /*
 // HIGH-GLOSS TRANSLUCENT GLASS MATERIAL WITH EMISSIVE GLOW (OPTIMIZED COLOR & LIGHTING)
 const dropletMaterial = new THREE.MeshPhysicalMaterial({
@@ -191,7 +218,7 @@ const dropletMaterial = new THREE.MeshPhysicalMaterial({
   reflectivity: 0.9
 }); */
 
-const droplet = new THREE.Mesh(dropletGeo, dropletMaterial);
+const droplet = new THREE.Mesh(dropletGeo, heroDropletMaterial);
 rig.add(droplet);
 
 // INNER GLOWING CORE & POINT LIGHT ATTACHED TO DROPLET
@@ -299,7 +326,7 @@ function setupGLBModel(gltf) {
   customGLBDrop.traverse((child) => {
     if (child.isMesh) {
       if (!USE_GLB_ORIGINAL_TEXTURES) {
-        child.material = dropletMaterial;
+        child.material = heroDropletMaterial; // branded pattern applies here too
       }
     }
   });
@@ -368,8 +395,11 @@ function makeAmbientDropletMaterial(opacity, emissiveIntensity) {
   return mat;
 }
 
-const ambientMatFore = makeAmbientDropletMaterial(0.82, 0.35); // Layer A — clearly visible glass
-const ambientMatBack = makeAmbientDropletMaterial(0.55, 0.22); // Layer B — a touch softer/further back
+// Opacity dropped into the 0.22-0.30 band so background drops read as
+// translucent haze; the hero droplet uses `dropletMaterial` directly
+// (opacity 0.92) and is untouched, so it stays the sharp, opaque focal point.
+const ambientMatFore = makeAmbientDropletMaterial(0.30, 0.35); // Layer A — translucent, no longer competes with the hero drop
+const ambientMatBack = makeAmbientDropletMaterial(0.22, 0.18); // Layer B — even lighter, reads as soft background haze
 
 const ambientGroup = new THREE.Group();
 rig.add(ambientGroup);
@@ -474,18 +504,23 @@ function updateAmbientDrops(t, dt) {
       //spawnDrop(d.mesh.position.x, d.mesh.position.z, d.rippleAmp);
 
       //NEW:
+      // Amplitude range cut ~64% (0.05–0.18 -> 0.018–0.065) and a falloff of
+      // 2.6 shrinks the effective radius/lifetime by roughly another 60–70%,
+      // so background impacts read as subtle disturbances, not waves.
+      const BACKGROUND_RIPPLE_FALLOFF = 2.6;
       const ripple =
         THREE.MathUtils.mapLinear(
         d.mesh.scale.x,
         0.14,
         0.52,
-        0.05,
-        0.18
+        0.018,
+        0.065
         );
       spawnDrop(
           d.mesh.position.x,
           d.mesh.position.z,
-          ripple
+          ripple,
+          BACKGROUND_RIPPLE_FALLOFF
       );
 
 
@@ -501,10 +536,11 @@ const DROP_Z = 0.5;
 let splashTriggered = false;
 
 let dropCursor = 0;
-function spawnDrop(x, z, amp) {
+function spawnDrop(x, z, amp, falloff = 1.0) {
   uniforms.uDropTime.value[dropCursor] = clock.getElapsedTime();
   uniforms.uDropOrigin.value[dropCursor].set(x, z);
   uniforms.uDropAmp.value[dropCursor] = amp;
+  uniforms.uDropFalloff.value[dropCursor] = falloff;
   dropCursor = (dropCursor + 1) % MAX_DROPS;
 }
 
@@ -608,7 +644,7 @@ function animate() {
     
     // Fade opacity slightly right before impact
     const proximity = Math.min(1.0, dropY / 1.0);
-    dropletMaterial.opacity = 0.4 + 0.6 * proximity;
+    heroDropletMaterial.opacity = 0.4 + 0.6 * proximity;
   }
 
   // Hover bobbing animation when hanging in air
@@ -625,6 +661,10 @@ function animate() {
 
   // Gentle ambient sway of rig
   rig.rotation.y = Math.sin(t * 0.08) * 0.02;
+
+  // 3D Tech Constellation: idle drift, edge redraw, and hover raycasting
+  // (tech-constellation.js populates this once it has built its nodes)
+  if (window.updateTechConstellation) window.updateTechConstellation(t, dt);
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);

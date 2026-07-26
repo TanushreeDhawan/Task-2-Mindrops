@@ -1,0 +1,40 @@
+/* =========================================================
+   3D TECH CONSTELLATION — HTML hover label
+   The nodes themselves are rendered inside the WebGL canvas
+   (three_scene.js / tech-constellation.js). This single label
+   is projected to screen space to track whichever node is
+   currently raycast-hovered — kept as real DOM text so it
+   stays crisp at small sizes instead of a baked canvas label.
+   ========================================================= */
+
+.tech-node-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 25;
+    transform: translate(-50%, calc(-100% - 14px));
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(4, 14, 26, 0.92);
+    border: 1px solid var(--nc, #4dd2ff);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 0 16px var(--nc, #4dd2ff);
+}
+
+.tech-node-label.is-visible {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 20px));
+}
+
+@media (max-width: 640px) {
+    .tech-node-label {
+        display: none;
+    }
+}
