@@ -306,7 +306,9 @@ a {
 }
 
 /* =========================================================
-   UPDATED: HERO TEXT CONTAINER & GLASSMORPHIC BADGE (NEW)
+   UPDATED: HERO TEXT CONTAINER & GLASSMORPHIC BADGE
+   (Note: this project's left card is `.hero-content` — there is no
+   separate `.hero-card` class, so the upgrade below is applied here.)
    ========================================================= */
 .hero-content {
     display: flex;
@@ -315,11 +317,14 @@ a {
     pointer-events: none;
     padding: 30px 20px;
     border-radius: 20px;
-    background: radial-gradient(120% 120% at 20% 50%, rgba(4, 18, 36, 0.55) 0%, rgba(4, 18, 36, 0.18) 100%);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    /* Crisper glass: dark teal/navy tint + stronger blur/saturation than before */
+    background: rgba(10, 25, 47, 0.55);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    /* Subtle cyan-tinted border + outer drop shadow + inner glow */
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                inset 0 0 20px rgba(0, 229, 255, 0.08);
     /* Added CSS Transition for Smooth Fade Out / Fade In Text Switching */
     transition: opacity 0.4s ease, transform 0.4s ease;
     opacity: 1;
@@ -363,8 +368,8 @@ a {
     line-height: 1.15;
     color: #ffffff;
     margin-bottom: 22px;
-    letter-spacing: -0.5px;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    letter-spacing: -0.8px; /* slightly tighter for a more premium, crafted feel at this weight/size */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), 0 4px 20px rgba(0, 0, 0, 0.4);
     pointer-events: auto;
 }
 

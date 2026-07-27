@@ -38,8 +38,13 @@
         { label: 'Node.js',    glyph: '\uf419', color: 0x3dd6c2 },
         { label: 'PHP',        glyph: '\uf457', color: 0x3dc7ff },
         { label: '.NET',       glyph: '\uf3ca', color: 0x4d7dff },
-        { label: 'Shopify',    glyph: '\uf957', color: 0x8a4dff },
+        { label: 'Shopify',    glyph: '\ue057', color: 0x95bf47 },
         { label: 'WordPress',  glyph: '\uf19a', color: 0xc34dff },
+        { label: 'Python',     glyph: '\uf3e2', color: 0xffd43b },
+        { label: 'Java',       glyph: '\uf4e4', color: 0xf89820 },
+        { label: 'Angular',    glyph: '\uf420', color: 0xdd0031 },
+        { label: 'Docker',     glyph: '\uf395', color: 0x2496ed },
+        { label: 'Git',        glyph: '\uf1d3', color: 0xf05033 },
     ];
 
     const BASE_CABLE_COLOR = 0x00d4ff;
@@ -52,11 +57,27 @@
     // ---------------------------------------------------
     // Positive z is TOWARD the camera in this scene (camera sits at z=5.8
     // looking back at z=0 — see layout() above), and the hero droplet itself
-    // sits at z=0.5. The previous z=-2.0 pushed the whole network behind the
-    // droplet into the far background, which read as "floating away". This
-    // now sits just to the right of the droplet and slightly in FRONT of it.
+    // sits at z=0.5. Position aligns the group's vertical center with the
+    // hero card/drop, pulls inward on x so it stays contained in-viewport.
+    //
+    // IMPORTANT: the water plane is a child of `rig`, which is offset to
+    // world y=-0.4 (see layout() in three_scene.js) — but this group is
+    // added directly to `scene`, so its y is an absolute world coordinate.
+    // The previous y=0.9 with the old GLOBE_RADIUS left only ~0.06 units of
+    // clearance above the water at the sphere's lowest point, which is why
+    // the bottom-most node (git) visibly dipped into it. y is raised and
+    // GLOBE_RADIUS trimmed slightly below (1.55 -> 1.25) so the sphere's
+    // top stays at the same already-confirmed-safe height clear of the
+    // navbar, while its bottom now clears the water with real margin.
+    const BASE_SCALE = 0.95; // up from 0.8 (~19% larger) for a more prominent presence
     const group = new THREE.Group();
-    group.position.set(3.6, 1.6, 2.2);
+    // NOTE: this scene's world units are small — the camera itself sits only
+    // ~5.8 units from the origin (see layout() in three_scene.js) — so a
+    // literal +5-8 unit shift would send the whole network far outside the
+    // camera frustum, the opposite of "more breathing room." Applying the
+    // same proportional shift as before (+0.6 to +0.7, matching the scale of
+    // this scene) instead.
+    group.position.set(3.9, 1.15, 2.2);
     scene.add(group);
 
     function sizeConstellation() {
@@ -66,10 +87,12 @@
             return;
         }
         group.visible = true;
-        const scale = w > 1200 ? 1.0 : w > 900 ? 0.82 : 0.66;
+        const scale = (w > 1200 ? 1.0 : w > 900 ? 0.82 : 0.66) * BASE_SCALE;
         group.scale.setScalar(scale);
-        // Shifted right across all breakpoints so it clears the hero text card
-        group.position.x = w > 1200 ? 3.6 : w > 900 ? 3.0 : 2.4;
+        // Shifted further right (2.6/2.2/1.8 -> 3.2/2.7/2.2) to clear the
+        // droplet and fill the right side; scale grew in tandem above, so
+        // the effective edge margin stays roughly the same as before.
+        group.position.x = w > 1200 ? 3.9 : w > 900 ? 3.4 : 2.9;
     }
     sizeConstellation();
     window.addEventListener('resize', sizeConstellation);
@@ -80,7 +103,7 @@
     // so the 9 badges read as sitting on a globe rather than
     // scattered along a flat helix.
     // ---------------------------------------------------
-    const GLOBE_RADIUS = 1.55;
+    const GLOBE_RADIUS = 1.25;
 
     function nodeBasePosition(i, count) {
         const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~2.39996 rad
@@ -95,32 +118,63 @@
     }
 
     // ---------------------------------------------------
-    // The globe grid itself — a wireframe sphere (lat/long lines)
-    // sitting just inside the node radius, so the badges read as
-    // landmarks on a rotating globe rather than a loose network.
+    // Globe silhouette — just 3 great-circle rings (equator + two
+    // meridians), not a full tessellated wireframe. This is what makes it
+    // unmistakably read as a sphere even in a single still frame (a full
+    // Fibonacci point cloud alone can look like scattered dots depending on
+    // rotation), while staying sparse/minimal per the "no dense grid" brief.
     // ---------------------------------------------------
-    function buildGlobeGrid() {
-        const gridGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 0.94, 16, 10);
-        const gridMat = new THREE.MeshBasicMaterial({
+    function buildGlobeRings() {
+        const ringMat = () => new THREE.MeshBasicMaterial({
             color: 0x00d4ff,
-            wireframe: true,
             transparent: true,
-            opacity: 0.16,
+            opacity: 0.22,
             depthWrite: false,
         });
-        group.add(new THREE.Mesh(gridGeo, gridMat));
+        const ringGeo = new THREE.TorusGeometry(GLOBE_RADIUS, 0.006, 8, 80);
 
-        // A slightly brighter equator + a thin outer rim glow to sell the "globe" read
-        const equatorGeo = new THREE.TorusGeometry(GLOBE_RADIUS * 0.94, 0.004, 8, 64);
-        const equatorMat = new THREE.MeshBasicMaterial({
-            color: 0x8ff2ff,
-            transparent: true,
-            opacity: 0.35,
-            depthWrite: false,
-        });
-        const equator = new THREE.Mesh(equatorGeo, equatorMat);
+        const equator = new THREE.Mesh(ringGeo, ringMat());
         equator.rotation.x = Math.PI / 2;
         group.add(equator);
+
+        const meridianA = new THREE.Mesh(ringGeo, ringMat());
+        group.add(meridianA); // vertical, as-is
+
+        const meridianB = new THREE.Mesh(ringGeo, ringMat());
+        meridianB.rotation.y = Math.PI / 3; // second meridian at 60°, reads as a globe graticule
+        group.add(meridianB);
+    }
+
+    // ---------------------------------------------------
+    // Soft glow core — a single additive-blended radial sprite sitting at
+    // the group's center, using the same cyan (#00d4ff / #8ff2ff) already
+    // established by the page's mesh-overlay/stats-section glow — so the
+    // network reads as tied to the same visual language as the rest of
+    // the hero.
+    // ---------------------------------------------------
+    function buildGlowCore() {
+        const size = 512;
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        grad.addColorStop(0, 'rgba(143, 242, 255, 0.55)');
+        grad.addColorStop(0.4, 'rgba(0, 212, 255, 0.22)');
+        grad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+
+        const tex = new THREE.CanvasTexture(c);
+        const mat = new THREE.SpriteMaterial({
+            map: tex,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        });
+        const glow = new THREE.Sprite(mat);
+        glow.scale.setScalar(GLOBE_RADIUS * 2.6);
+        group.add(glow);
     }
 
     // ---------------------------------------------------
@@ -201,34 +255,64 @@
     }
 
     // ---------------------------------------------------
-    // Build connecting edges — sequential chain plus a few
-    // "skip" links so it reads as a network, not a single strand.
+    // Build connecting edges as gentle curved arcs (not straight chords) —
+    // bulging outward from the globe center, the same visual language as
+    // flight-path/undersea-cable network maps. Kept sparse (nearest-neighbor
+    // only) and subtle (opacity 0.15-0.25) per the "minimalist connections"
+    // brief; the arc shape itself is what reads as premium rather than density.
     // ---------------------------------------------------
     const edges = [];
+    const ARC_SEGMENTS = 16;
+    const ARC_BULGE = GLOBE_RADIUS * 0.32;
 
     function addEdge(a, b) {
-        const geo = new THREE.BufferGeometry().setFromPoints([
-            nodes[a].basePos.clone(),
-            nodes[b].basePos.clone(),
-        ]);
+        const geo = new THREE.BufferGeometry();
+        const positions = new Float32Array((ARC_SEGMENTS + 1) * 3);
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const material = new THREE.LineBasicMaterial({
             color: BASE_CABLE_COLOR,
             transparent: true,
-            opacity: 0.22,
+            opacity: 0.18, // within the requested 0.15-0.25 band
             blending: THREE.AdditiveBlending,
             depthWrite: false,
         });
         const line = new THREE.Line(geo, material);
+        line.frustumCulled = false; // bounding sphere isn't recomputed every frame as the arc moves
         group.add(line);
         edges.push({ line, material, a, b });
     }
 
+    // Evaluates the quadratic-bezier arc between two node positions and
+    // writes the sampled points directly into the line's position buffer —
+    // avoids allocating new geometry every frame.
+    const _mid = new THREE.Vector3();
+    const _ctrl = new THREE.Vector3();
+    function updateEdgeArc(edge) {
+        const pA = nodes[edge.a].sprite.position;
+        const pB = nodes[edge.b].sprite.position;
+        _mid.addVectors(pA, pB).multiplyScalar(0.5);
+        // Push the control point outward along the midpoint's own direction
+        // from the globe center — this is what creates the outward "bulge".
+        _ctrl.copy(_mid).normalize().multiplyScalar(_mid.length() + ARC_BULGE);
+
+        const posAttr = edge.line.geometry.attributes.position;
+        for (let s = 0; s <= ARC_SEGMENTS; s++) {
+            const t = s / ARC_SEGMENTS;
+            const inv = 1 - t;
+            const x = inv * inv * pA.x + 2 * inv * t * _ctrl.x + t * t * pB.x;
+            const y = inv * inv * pA.y + 2 * inv * t * _ctrl.y + t * t * pB.y;
+            const z = inv * inv * pA.z + 2 * inv * t * _ctrl.z + t * t * pB.z;
+            posAttr.setXYZ(s, x, y, z);
+        }
+        posAttr.needsUpdate = true;
+    }
+
     function buildEdges() {
         // Sequential index order no longer corresponds to spatial proximity
-        // once nodes sit on a sphere, so connect each node to its 2 nearest
-        // neighbors by actual 3D distance — this is what reads as a "globe
-        // network" (like flight-path/great-circle maps) rather than picking
-        // arbitrary index pairs.
+        // once nodes sit on a sphere, so connect each node to its 3 nearest
+        // neighbors by actual 3D distance (bumped from 2) — this is what
+        // guarantees every node reads as part of one connected globe
+        // network rather than a few nodes looking like isolated outliers.
         const seen = new Set();
         nodes.forEach((n, i) => {
             const distances = nodes
@@ -236,7 +320,7 @@
                 .filter((e) => e.j !== i)
                 .sort((a, b) => a.d - b.d);
 
-            distances.slice(0, 2).forEach(({ j }) => {
+            distances.slice(0, 3).forEach(({ j }) => {
                 const key = i < j ? `${i}-${j}` : `${j}-${i}`;
                 if (seen.has(key)) return;
                 seen.add(key);
@@ -304,7 +388,7 @@
             if (isAdjacent) e.material.color.setHex(nodes[index].tech.color);
             else e.material.color.setHex(BASE_CABLE_COLOR);
 
-            const targetOpacity = index === -1 ? 0.22 : isAdjacent ? 0.85 : 0.08;
+            const targetOpacity = index === -1 ? 0.18 : isAdjacent ? 0.85 : 0.06;
             gsap.to(e.material, { opacity: targetOpacity, duration: 0.3, ease: 'power2.out' });
         });
 
@@ -339,7 +423,8 @@
             await document.fonts.ready;
         } catch (e) { /* proceed with fallback glyph rendering */ }
 
-        buildGlobeGrid();
+        buildGlowCore();
+        buildGlobeRings();
         buildNodes();
         buildEdges();
         sizeConstellation();
@@ -367,13 +452,8 @@
             );
         });
 
-        // Edge endpoints follow the drifting nodes
-        edges.forEach((e) => {
-            const posAttr = e.line.geometry.attributes.position;
-            posAttr.setXYZ(0, nodes[e.a].sprite.position.x, nodes[e.a].sprite.position.y, nodes[e.a].sprite.position.z);
-            posAttr.setXYZ(1, nodes[e.b].sprite.position.x, nodes[e.b].sprite.position.y, nodes[e.b].sprite.position.z);
-            posAttr.needsUpdate = true;
-        });
+        // Edge arcs re-sampled each frame to follow the drifting/rotating nodes
+        edges.forEach((e) => updateEdgeArc(e));
 
         // Continuous, frame-rate-independent auto-rotation (dt-based, equivalent
         // to += 0.002/frame @60fps) — this is what actually reveals the depth

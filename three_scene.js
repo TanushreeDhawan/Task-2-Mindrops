@@ -177,28 +177,28 @@ const dropletMaterial = new THREE.MeshPhysicalMaterial({
 });
 
 // ==============================================================================
-// HERO DROP BRAND PATTERN
-// Maps the Mindrops veined-drop artwork onto the hero droplet only (the
-// ambient background drops below clone `dropletMaterial` BEFORE this texture
-// is attached, so they stay plain and the hero drop remains the one branded
-// focal point).
+// HERO DROP — pure liquid glass, no pattern overlay
 //
-// IMPORTANT: applied as `emissiveMap`, NOT `map`. The droplet's revolve UV
-// wraps this whole square image around the full 360°, so most sampled points
-// land on the transparent margin around the icon rather than the icon itself.
-// Using it as the base `map` on a `transparent: true` material meant almost
-// the entire surface read as near-zero alpha — which is why the drop vanished
-// entirely. emissiveMap only adds glow on top of the existing glass — it
-// never affects opacity, so the drop can't disappear again, and the veined
-// pattern still reads clearly as a glowing brand mark inside the glass.
+// The procedural brain-fold pattern that lived here previously has been
+// removed entirely per request (it's what was reading as an "incomplete/
+// glitched texture" once combined with the lighter base color). No .map,
+// no .emissiveMap — just a clean, independent MeshPhysicalMaterial tuned
+// for a smooth, high-transmission refractive liquid look.
 // ==============================================================================
-const dropPatternTexture = new THREE.TextureLoader().load('mindrops-drop-pattern.png');
-if (THREE.SRGBColorSpace) dropPatternTexture.colorSpace = THREE.SRGBColorSpace;
+const heroDropletMaterial = new THREE.MeshPhysicalMaterial({
+  color: 0x00e5ff,
+  roughness: 0.08,
+  metalness: 0.1,
+  transmission: 0.7,
+  thickness: 1.2,
+  ior: 1.33,
+  transparent: true,
+  opacity: 0.9,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.05,
+  reflectivity: 0.9,
+});
 
-const heroDropletMaterial = dropletMaterial.clone();
-heroDropletMaterial.emissiveMap = dropPatternTexture;
-heroDropletMaterial.emissive = new THREE.Color(0x49d9ff); // brighter cyan so the veins actually pop against the glass
-heroDropletMaterial.emissiveIntensity = 0.65;
 
 /*
 // HIGH-GLOSS TRANSLUCENT GLASS MATERIAL WITH EMISSIVE GLOW (OPTIMIZED COLOR & LIGHTING)
@@ -326,7 +326,7 @@ function setupGLBModel(gltf) {
   customGLBDrop.traverse((child) => {
     if (child.isMesh) {
       if (!USE_GLB_ORIGINAL_TEXTURES) {
-        child.material = heroDropletMaterial; // branded pattern applies here too
+        child.material = heroDropletMaterial;
       }
     }
   });
