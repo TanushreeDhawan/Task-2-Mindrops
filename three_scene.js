@@ -25,7 +25,18 @@ const bottomFillLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
 bottomFillLight.position.set(0, -6, 3);
 scene.add(bottomFillLight);
 
-scene.add(new THREE.AmbientLight(0x133b63, 2.6));
+scene.add(new THREE.AmbientLight(0x133b63, 2.0)); // dropped from 2.6 — flatter ambient was washing out the contrast/depth
+
+// Dedicated top-left specular hotspot — the Three.js equivalent of a CSS
+// `inset` highlight. Positioned up, left, and toward the camera relative
+// to the droplet (DROP_X=2, DROP_Z=0.5) so it catches a bright highlight
+// on the upper-left of the glass, leaving the lower-right in natural
+// shadow from the material's own PBR shading — exactly the "inset
+// highlight top-left / dark shadow bottom-right" look, done with light
+// direction instead of a paintable shadow.
+const dropHighlight = new THREE.PointLight(0xeaffff, 4.5, 6.0);
+dropHighlight.position.set(-1.2, 2.2, 3.4);
+scene.add(dropHighlight);
 
 function layout() {
   const w = window.innerWidth, h = window.innerHeight;
@@ -189,11 +200,11 @@ const heroDropletMaterial = new THREE.MeshPhysicalMaterial({
   color: 0x00e5ff,
   roughness: 0.08,
   metalness: 0.1,
-  transmission: 0.7,
+  transmission: 0.42,   // dropped from 0.7 — high transmission was letting the dark background bleed straight through, reading as faint
   thickness: 1.2,
   ior: 1.33,
   transparent: true,
-  opacity: 0.9,
+  opacity: 0.95,        // up from 0.9 — small bump for a more solid, vibrant presence
   clearcoat: 1.0,
   clearcoatRoughness: 0.05,
   reflectivity: 0.9,
@@ -224,16 +235,47 @@ rig.add(droplet);
 // INNER GLOWING CORE & POINT LIGHT ATTACHED TO DROPLET
 const innerCoreGeo = new THREE.SphereGeometry(0.25, 24, 24);
 const innerCoreMat = new THREE.MeshBasicMaterial({
-  color: 0x73f3ff,
+  color: 0x9df9ff,      // brighter/whiter core so it reads as a genuine hot center, not a flat tint
   transparent: true,
-  opacity: 0.65
+  opacity: 0.85         // up from 0.65 — richer, more visible core
 });
 const innerCore = new THREE.Mesh(innerCoreGeo, innerCoreMat);
 droplet.add(innerCore);
 
 // Slightly softer intensity, but wider distance to light up the bottom half evenly
-const dropLight = new THREE.PointLight(0x73f3ff, 2.5, 8.0);
+const dropLight = new THREE.PointLight(0x73f3ff, 3.4, 8.0); // intensity up from 2.5 for more vibrancy
 droplet.add(dropLight);
+
+// EXTERNAL AMBIENT GLOW — ties the hero drop visually to the tech network's
+// own glow core (same #00d4ff/#8ff2ff cyan family, same additive-sprite
+// technique as buildGlowCore() in tech-constellation.js), so the two feel
+// like they share one light source rather than being two disconnected
+// effects placed side by side.
+function makeDropGlowSprite() {
+  const size = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, 'rgba(143, 242, 255, 0.5)');
+  grad.addColorStop(0.45, 'rgba(0, 212, 255, 0.22)');
+  grad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    opacity: 0.6,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const glow = new THREE.Sprite(mat);
+  glow.scale.setScalar(2.6); // extends well past the drop's own silhouette
+  return glow;
+}
+droplet.add(makeDropGlowSprite());
 
 // SOFT CIRCULAR PARTICLE TEXTURE (Prevents square pixels)
 function createCircularParticleTexture() {

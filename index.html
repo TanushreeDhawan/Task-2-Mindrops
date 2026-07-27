@@ -97,6 +97,12 @@
             
             <!-- Parent 3D Container (.hero-3d with overflow: hidden) -->
             <div class="hero-3d">
+                <!-- CSS-only ambient glow, sitting BEHIND the canvas. The renderer uses
+                     alpha:true, so the canvas is transparent everywhere except the water/
+                     drop/network geometry — this shows through in that empty "sky" area
+                     around the drop, adding a genuine CSS glow layer (the one piece of
+                     this request that actually can be done in CSS, unlike the drop itself). -->
+                <div class="hero-glow-backdrop" aria-hidden="true"></div>
                 <canvas id="ink-canvas" aria-hidden="true"></canvas>
             </div>
 
@@ -242,8 +248,15 @@
                 <p class="stats-body">Every product we build starts as a single idea dropped into motion — engineered until it ripples through everything it touches.</p>
             </div>
 
-            <!-- Stats grid (3x2 desktop / 2 tablet / 1 mobile) -->
-            <div class="stats-grid">
+            <!-- Stats carousel: drag/swipe + snap, arrows + dots. Individual
+                 .stat-card markup/hover styling is unchanged from before —
+                 only the outer wrapper and layout mode changed. -->
+            <div class="stats-carousel">
+                <button class="stats-carousel-arrow stats-carousel-arrow--prev" type="button" aria-label="Previous stats">
+                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+
+                <div class="stats-carousel-track" tabindex="0" role="region" aria-label="Company statistics carousel">
 
                 <!-- 1. Projects Done -->
                 <div class="stat-card" data-count="500">
@@ -299,7 +312,14 @@
                     <div class="stat-label">Established</div>
                 </div>
 
+                </div>
+
+                <button class="stats-carousel-arrow stats-carousel-arrow--next" type="button" aria-label="Next stats">
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
             </div>
+
+            <div class="stats-carousel-dots" role="tablist" aria-label="Stats slide navigation"></div>
         </section>
 
     </main>

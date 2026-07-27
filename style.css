@@ -275,6 +275,24 @@ a {
     pointer-events: none; /* Let overlay catch clicks unless specified */
 }
 
+/* Ambient glow behind the canvas — pure CSS, positioned roughly where the
+   hero droplet sits (DROP_X=2, DROP_Z=0.5 in world space, right-of-center
+   in screen space). Shows through the canvas's transparent "sky" pixels
+   (renderer uses alpha:true) for extra bloom without touching WebGL. */
+.hero-glow-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0; /* behind #ink-canvas, which is z-index default/auto but later in paint order */
+    background: radial-gradient(
+        circle at 58% 54%,
+        rgba(0, 212, 255, 0.32) 0%,
+        rgba(0, 212, 255, 0.14) 30%,
+        rgba(0, 212, 255, 0) 62%
+    );
+    filter: blur(6px);
+    pointer-events: none;
+}
+
 /* Ink Drop WebGL Canvas */
 #ink-canvas {
     width: 100%;
@@ -283,6 +301,7 @@ a {
     position: absolute;
     top: 0;
     left: 0;
+    z-index: 1;
     pointer-events: auto; /* Catch 3D interactions */
     cursor: pointer;
 }
